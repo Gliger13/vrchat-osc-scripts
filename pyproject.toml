@@ -1,0 +1,29 @@
+[project]
+name = "vrchat-osc-scripts"
+version = "0.1.0"
+description = "Python scripts to read and write VRChat OSC messages"
+authors = [
+    { name = "Gliger", email = "gligers@pm.me" }
+]
+license = { text = "GPL-3.0" }
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "python-osc (>=1.9.3,<2.0.0)",
+    "requests (>=2.32.4,<3.0.0)",
+]
+
+[project.urls]
+Homepage = "https://github.com/gliger13/vrchat-osc-scripts"
+Repository = "https://github.com/gliger13/vrchat-osc-scripts"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.4.1"
+black = "^25.1.0"
+pylint = "^3.3.7"
+mypy = "^1.16.1"
+

@@ -7,6 +7,7 @@ import logging
 from datetime import timedelta
 from typing import Optional
 
+from pythonosc.osc_message_builder import ArgValue
 from pythonosc.udp_client import SimpleUDPClient
 
 from vrchat_osc_scripts.config import Config
@@ -25,16 +26,21 @@ class VRChatOSCSender:
         """
         self.client = SimpleUDPClient(ip, port)
 
-    def send_parameter(self, parameter: str, value: float | int | bool | str) -> None:
+    def send_parameter(self, parameter: str, values: ArgValue) -> None:
         """Send a parameter value to VRChat.
 
         :param parameter: Name of the parameter.
-        :param value: Value to send (float, int, bool, or str).
+        :param values: Value to send (float, int, bool, or str, or list of those values).
         """
-        logger.info(f"Sending: {parameter} = {value}")
-        self.client.send_message(parameter, value)
+        logger.info(f"Sending: {parameter} = {values}")
+        self.client.send_message(parameter, values)
 
-    def send_to_chat(self, text: str, time_to_clear: Optional[timedelta] = None) -> None:
+    def send_to_chat(
+        self,
+        text: str,
+        to_send_immediately: bool = True,
+        to_send_notification: bool = False,
+        time_to_clear: Optional[timedelta] = None
+    ) -> None:
         """Send the given text to VRChat textbox."""
-        self.send_parameter("/chatbox/input", text)
-        # self.send_parameter("/chatbox/input", text)
+        self.send_parameter("/chatbox/input", values=[text, to_send_immediately, to_send_notification])

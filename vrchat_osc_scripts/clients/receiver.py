@@ -56,7 +56,7 @@ class VRChatOSCReceiver:
         self.parameters[param_name] = value
 
         if old_value != value:
-            logger.debug(f"Parameter changed: {param_name} = {value}")
+            # logger.debug(f"Parameter changed: %s = %s", param_name, value)
             for handler in self.handlers:
                 try:
                     handler.on_parameter_changed(param_name, value)

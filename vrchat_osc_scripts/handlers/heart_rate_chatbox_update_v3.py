@@ -1,8 +1,11 @@
 import logging
 import statistics
 from collections import deque
-from datetime import datetime, timedelta, timezone
-from typing import Deque, List, Tuple
+from dataclasses import dataclass
+from datetime import datetime
+from datetime import timedelta
+from datetime import timezone
+from typing import Deque, Any
 
 from vrchat_osc_scripts.clients.receiver import VRChatOSCReceiver
 from vrchat_osc_scripts.clients.sender import VRChatOSCSender
@@ -10,16 +13,103 @@ from vrchat_osc_scripts.handlers.base import BaseHandler
 
 logger = logging.getLogger(__name__)
 
+@dataclass(slots=True, kw_only=True)
+class Mood:
+    name: str
+    hr_start: int | None
+    hr_end: int | None
+    stabilisation_window_map: dict[str, timedelta]
+    order: int
+
+    def __gt__(self, other: Any) -> bool:
+        if isinstance(other, Mood):
+            return self.order > other.order
+        raise ValueError("")
+
+    def __hash__(self) -> int:
+        return hash(self.name)
+
+MOODS = [
+    Mood(
+        name="deep sleeping",
+        hr_start=None,
+        hr_end=50,
+        stabilisation_window_map={
+            "sleeping": timedelta(minutes=1)
+        },
+        order=0,
+    ),
+    Mood(
+        name="sleeping",
+        hr_start=50,
+        hr_end=60,
+        stabilisation_window_map={
+            "deep sleeping": timedelta(minutes=1),
+            "comfy": timedelta(minutes=2),
+        },
+        order=1,
+    ),
+    Mood(
+        name="comfy",
+        hr_start=60,
+        hr_end=80,
+        stabilisation_window_map={
+            "sleeping": timedelta(minutes=2),
+            "normal": timedelta(minutes=2),
+        },
+        order=2,
+    ),
+    Mood(
+        name="normal",
+        hr_start=80,
+        hr_end=110,
+        stabilisation_window_map={
+            "comfy": timedelta(minutes=2),
+            "active": timedelta(minutes=1),
+        },
+        order=3,
+    ),
+    Mood(
+        name="active",
+        hr_start=110,
+        hr_end=135,
+        stabilisation_window_map={
+            "normal": timedelta(minutes=2),
+            "intense": timedelta(seconds=10),
+        },
+        order=4,
+    ),
+    Mood(
+        name="intense",
+        hr_start=135,
+        hr_end=150,
+        stabilisation_window_map={
+            "active": timedelta(seconds=10),
+            "super intense": timedelta(seconds=10),
+        },
+        order=5,
+    ),
+    Mood(
+        name="super intense",
+        hr_start=150,
+        hr_end=None,
+        stabilisation_window_map={
+            "intense": timedelta(seconds=10),
+        },
+        order=6,
+    ),
+]
+MOOD_MAP = {mood.name: mood for mood in MOODS}
+TRANSITION_MOODS = [
+    "excited",
+    "calming"
+]
+
 
 class HeartRateChatBoxUpdateHandler(BaseHandler):
     """
     Handler that derives a textual “mood” from heart‑rate samples and posts it
     into VRChat’s chatbox.
-
-    Compared to the original version this class now *debounces* mood changes:
-    a new mood must stay stable for ``STATE_STABILISATION_SEC`` seconds before
-    it is announced.  This prevents rapid state flapping such as
-    “normal → active → normal” in back‑to‑back seconds.
     """
 
     # ---------- Tuning constants ---------------------------------------------
@@ -42,46 +132,51 @@ class HeartRateChatBoxUpdateHandler(BaseHandler):
         receiver: VRChatOSCReceiver,
     ):
         super().__init__(sender, receiver)
-        self._hr_history: Deque[Tuple[datetime, float]] = deque(maxlen=self.HISTORY_SIZE)
+        self._hr_history: Deque[tuple[datetime, float]] = deque(maxlen=self.HISTORY_SIZE)
 
         self._current_mood: str | None = None       # debounced, last published
-        self._pending_mood: Tuple[str, datetime] | None = None  # (mood, first_seen)
+        self._pending_mood: tuple[str, datetime] | None = None  # (mood, first_seen)
 
         self._last_notified_bpm: float | None = None
 
     # -------------------------------------------------------------------------
 
-    def on_parameter_changed(self, parameter, hr) -> None:
+    def on_parameter_changed(self, parameter: str, hr: int) -> None:
         if parameter != "Normalised":
             return
 
         try:
-            hr = float(hr) * 250          # Denormalise before validation
+            hr = float(hr) * 250  # Denormalize before validation
         except (TypeError, ValueError):
-            logger.warning("Invalid heart‑rate value: %s", hr)
+            logger.warning(f"Invalid heart‑rate value: {hr}")
             return
 
         now = datetime.now(timezone.utc)
         self._hr_history.append((now, hr))
 
         baseline = self._compute_baseline(now, exclude_latest=True)
+
         last_sample = self._hr_history[-2] if len(self._hr_history) >= 2 else None
         last_hr, last_ts = (last_sample[1], last_sample[0]) if last_sample else (None, None)
-
-        candidate_mood = self._derive_mood(hr, baseline, last_hr, last_ts, now)
+        candidate_mood = self._derive_mood(hr, baseline)
 
         # ---------------- Debounce mood changes ----------------
         self._update_debounced_state(candidate_mood, now)
 
-        # --------------- Big delta announcements ---------------
-        if (
-            self._current_mood is not None
-            and last_hr is not None
-            and abs(hr - last_hr) >= self.SIGNIFICANT_DELTA_BPM
-            and (self._last_notified_bpm is None or abs(hr - self._last_notified_bpm) >= self.SIGNIFICANT_DELTA_BPM)
-        ):
-            self.send_new_mood_state(f"{self._current_mood} ({int(last_hr)} → {int(hr)})")
-            self._last_notified_bpm = hr
+        # # --------------- Big delta announcements ---------------
+        # if (
+        #     self._current_mood is not None
+        #     and last_hr is not None
+        #     and abs(hr - last_hr) >= self.SIGNIFICANT_DELTA_BPM
+        #     and (self._last_notified_bpm is None or abs(hr - self._last_notified_bpm) >= self.SIGNIFICANT_DELTA_BPM)
+        # ):
+        #     if hr > last_hr:
+        #         vector = "↑↑"
+        #     else:
+        #         vector = "↓↓"
+        #     mood_message = f"♡ {vector} {hr} - {self._current_mood}"
+        #     self.send_new_mood_state(mood_message)
+        #     self._last_notified_bpm = hr
 
     # -------------------------------------------------------------------------
 
@@ -98,28 +193,38 @@ class HeartRateChatBoxUpdateHandler(BaseHandler):
         if candidate == self._current_mood:
             # Still in the same mood – clear any pending transition
             self._pending_mood = None
+
+        if any(candidate.startswith(transition_mood) for transition_mood in TRANSITION_MOODS):
+            self.send_new_mood_state(candidate)
             return
 
         # Mood differs from the one currently published
         if self._pending_mood is None or self._pending_mood[0] != candidate:
             # New candidate – start timing
             self._pending_mood = (candidate, now)
-            logger.debug("Mood candidate %s detected; waiting for stability", candidate)
+            # logger.debug(f"Mood candidate {candidate} detected; waiting for stability")
             return
 
         # Candidate unchanged – check dwell time
         first_seen = self._pending_mood[1]
         if (now - first_seen).total_seconds() >= self.STATE_STABILISATION_SEC:
+            old_mood = MOOD_MAP[self._current_mood]
+            new_mood = MOOD_MAP[self._pending_mood]
+            if new_mood > old_mood:
+                vector = "↑"
+            else:
+                vector = "↓"
             self._current_mood = candidate
             self._pending_mood = None
-            self.send_new_mood_state(candidate)
-            logger.debug("Mood changed to %s after stabilisation", candidate)
+            mood_message = f"♡ {vector} {self._hr_history[-1][1]} - {self._current_mood}"
+            self.send_new_mood_state(mood_message)
+            logger.debug(f"Mood changed to {candidate} after stabilisation")
 
     # -------------------------------------------------------------------------
 
     def _compute_baseline(self, now: datetime, *, exclude_latest: bool) -> float | None:
         cutoff = now - timedelta(seconds=self.BASELINE_WINDOW_SEC)
-        samples: List[float] = [
+        samples: list[float] = [
             bpm
             for ts, bpm in list(self._hr_history)[: len(self._hr_history) - (1 if exclude_latest else 0)]
             if ts >= cutoff
@@ -128,29 +233,14 @@ class HeartRateChatBoxUpdateHandler(BaseHandler):
 
     # -------------------------------------------------------------------------
 
-    def _derive_mood(
-        self,
-        hr: float,
-        baseline: float | None,
-        last_hr: float | None,
-        last_ts: datetime | None,
-        now: datetime,
-    ) -> str:
-        # Short‑term sudden jumps / drops
-        if last_hr is not None and last_ts is not None:
-            dt = (now - last_ts).total_seconds()
-            if hr - last_hr >= self.SUDDEN_JUMP_BPM and dt <= self.SUDDEN_JUMP_WINDOW_SEC:
-                return "♡ excited"
-            if last_hr - hr >= self.SUDDEN_DROP_BPM and dt <= self.SUDDEN_DROP_WINDOW_SEC:
-                return "♡ calming"
-
+    def _derive_mood(self, hr: float, baseline: float | None) -> str:
         # Deviation from rolling baseline
         if baseline is not None:
             delta = hr - baseline
             if delta >= self.SUDDEN_JUMP_BPM:
-                return "♡ excited"
+                return f"♡ excited (+{delta} in {self.BASELINE_WINDOW_SEC}s)"
             if delta <= -self.SUDDEN_DROP_BPM:
-                return "♡ calming"
+                return f"♡ calming (-{delta} in {self.BASELINE_WINDOW_SEC}s)"
 
         # Bucket by absolute zones
         return self._bucket_mood(hr)
@@ -158,33 +248,17 @@ class HeartRateChatBoxUpdateHandler(BaseHandler):
     # -------------------------------------------------------------------------
 
     def _bucket_mood(self, hr: float) -> str:
-        zones = {
-            "♡ deep sleeping": (None, 50),
-            "♡ sleeping": (50, 60),
-            "♡ comfy": (60, 79),
-            "♡ normal": (79, 110),
-            "♡ active": (110, 135),
-            "♡ intense": (135, None),
-        }
-        for mood, (low, high) in zones.items():
-            if low is None and hr < high:
-                return mood
-            if high is None and hr >= low:
-                return mood
-            if low is not None and high is not None and low <= hr < high:
-                return mood
+        for mood in MOODS:
+            if mood.hr_start is None and hr < mood.hr_end:
+                return mood.name
+            if mood.hr_end is None and hr >= mood.hr_start:
+                return mood.name
+            if mood.hr_start is not None and mood.hr_end is not None and mood.hr_start <= hr < mood.hr_end:
+                return mood.name
         raise ValueError(hr)
 
     # -------------------------------------------------------------------------
 
     def send_new_mood_state(self, message: str) -> None:
-        logger.info("Announcing mood: %s", message)
+        logger.info(f"Announcing mood: {message}")
         self._sender.send_to_chat(message)
-
-    # -------------------------------------------------------------------------
-
-    def reset_state(self) -> None:
-        self._hr_history.clear()
-        self._current_mood = None
-        self._pending_mood = None
-        self._last_notified_bpm = None

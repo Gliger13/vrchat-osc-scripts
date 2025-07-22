@@ -83,3 +83,10 @@ Most configuration options can be found and modified in:
 
 [vrchat_osc_scripts/config.py](vrchat_osc_scripts/config.py)
 
+> ⚠️ **Please don't forget to use the correct VRChat OSC ports for this script to function properly.**
+
+You can run multiple OSC-enabled programs simultaneously by using an OSC routing tool such as [VRCOSC](https://github.com/VolcanicArts/VRCOSC).
+
+The current configuration is set up with the following routes in **VRCOSC**:
+
+![image](.readme-images/vrcosc-routes.png)

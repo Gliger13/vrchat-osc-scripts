@@ -1,4 +1,5 @@
 """Module contains PiShock client to interact with PiShock"""
+
 import logging
 from datetime import datetime, timedelta
 from enum import Enum
@@ -9,6 +10,7 @@ import requests
 from vrchat_osc_scripts.config import Config
 
 logger = logging.getLogger(__name__)
+
 
 class Operation(Enum):
     """Name of PiShock operation."""
@@ -21,10 +23,7 @@ class Operation(Enum):
 class PiShockClient:
     """Client to send commands to the PiShock API."""
 
-    MAX_INTENSITY: Final[int] = 5
-    COOL_DOWN_TIME: Final[timedelta] = timedelta(seconds=30)
     API_URL: Final[str] = "https://do.pishock.com/api/apioperate"
-
 
     def __init__(self) -> None:
         """Initialize the client using creds from env vars"""
@@ -58,14 +57,14 @@ class PiShockClient:
             "Intensity": intensity,
             "Duration": duration,
             "Apikey": Config.PISHOCK_API_KEY,
-            "Op": operation.value
+            "Op": operation.value,
         }
-        if payload["Intensity"] > 5:
-            raise ValueError("SAFE GUARD PREVENTED INTENSITY HIGHER THAN 5")
+        if payload["Intensity"] > Config.MAX_SHOCK_INTENSITY_SAFE_GUARD:
+            raise ValueError(f"SAFE GUARD PREVENTED INTENSITY HIGHER THAN {Config.MAX_SHOCK_INTENSITY_SAFE_GUARD}")
         headers = {"Content-Type": "application/json"}
         if self._last_shock_time is not None:
             time_since_last_shock = datetime.now() - self._last_shock_time
-            if time_since_last_shock <= self.COOL_DOWN_TIME:
+            if time_since_last_shock <= Config.SHOCK_COOLDOWN_TIME:
                 logger.info(
                     f"PiShock command rejected, cool down is not done. "
                     f"Passed: {time_since_last_shock.total_seconds()}s"

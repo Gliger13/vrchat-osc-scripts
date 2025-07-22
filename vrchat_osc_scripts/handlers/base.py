@@ -1,4 +1,5 @@
 """Base handler abstraction for VRChat OSC events."""
+
 from abc import ABCMeta, abstractmethod
 from typing import Any
 
@@ -12,6 +13,7 @@ class BaseHandler(metaclass=ABCMeta):
     Subclasses receive both an OSC sender and receiver so they can read the
     current parameter state and send new OSC messages in response to changes.
     """
+
     def __init__(self, sender: VRChatOSCSender, receiver: VRChatOSCReceiver) -> None:
         """Create a new handler.
 

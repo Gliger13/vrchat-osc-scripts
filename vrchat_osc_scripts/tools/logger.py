@@ -3,6 +3,7 @@
 Python logging helper that provides colourised console output and daily‑rotated
 log files written beneath a *logs/* directory next to the running process.
 """
+
 import logging
 import sys
 from logging.handlers import TimedRotatingFileHandler
@@ -83,9 +84,7 @@ def setup_logging(
 
     # Console handler with colour
     stream_handler = logging.StreamHandler(stream=sys.stdout)
-    stream_handler.setFormatter(
-        ColourFormatter(log_format, datefmt=date_format)
-    )
+    stream_handler.setFormatter(ColourFormatter(log_format, datefmt=date_format))
 
     root_logger.addHandler(file_handler)
     root_logger.addHandler(stream_handler)

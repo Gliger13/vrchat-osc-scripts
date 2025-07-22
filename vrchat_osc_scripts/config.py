@@ -1,5 +1,7 @@
 """Configuration module for OSC, VRChat, and Avatar."""
+
 import os
+from datetime import timedelta
 from typing import Final
 
 
@@ -23,3 +25,8 @@ class Config:
     PISHOCK_CODE = os.getenv("PISHOCK_CODE", None)
 
     AVATAR_TAIL_PARAMETER_NAME: Final[str] = "tail"
+    SHOCK_INTENSITY_ON_TAIL_GRAB: Final[int] = 1
+    SHOCK_DURATION_ON_TAIL_GRAB: Final[int] = 1
+    SHOCK_COOLDOWN_TIME: Final[timedelta] = timedelta(seconds=30)
+    MAX_SHOCK_INTENSITY_SAFE_GUARD: Final[int] = 5
+    SHOCK_MESSAGE = "⚡️"

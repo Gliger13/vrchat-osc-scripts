@@ -4,8 +4,6 @@ Defines VRChatOSCSender to send OSC parameter updates to VRChat.
 """
 
 import logging
-from datetime import timedelta
-from typing import Optional
 
 from pythonosc.osc_message_builder import ArgValue
 from pythonosc.udp_client import SimpleUDPClient
@@ -40,7 +38,6 @@ class VRChatOSCSender:
         text: str,
         to_send_immediately: bool = True,
         to_send_notification: bool = False,
-        time_to_clear: Optional[timedelta] = None
     ) -> None:
         """Send the given text to VRChat textbox."""
         self.send_parameter("/chatbox/input", values=[text, to_send_immediately, to_send_notification])

@@ -2,6 +2,7 @@
 
 Defines a handler that reacts to specific VRChat OSC parameter changes.
 """
+
 import logging
 from typing import Any
 
@@ -55,14 +56,14 @@ class ShockOnTailGrabHandler(BaseHandler):
     def send_shock(self) -> None:
         """Send a shock using the PiShock client and notify VRChat via OSC chat.
 
-        If the PiShock API call is successful, a ⚡️ emoji is sent to the VRChat
-        chat to indicate that a shock was triggered.
+        If the PiShock API call is successful, a shock message is sent to the
+        VRChat chat to indicate that a shock was triggered.
         """
         is_was_send = self._pishock_client.send_command(
             name="Shock From Tail Grab",
-            intensity=1,
-            duration=1,
+            intensity=Config.SHOCK_INTENSITY_ON_TAIL_GRAB,
+            duration=Config.SHOCK_DURATION_ON_TAIL_GRAB,
             operation=Operation.SHOCK,
         )
         if is_was_send:
-            self._sender.send_to_chat("⚡️")
+            self._sender.send_to_chat(Config.SHOCK_MESSAGE)

@@ -12,7 +12,6 @@ from pythonosc.osc_server import BlockingOSCUDPServer
 
 from vrchat_osc_scripts.config import Config
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -56,14 +55,11 @@ class VRChatOSCReceiver:
         self.parameters[param_name] = value
 
         if old_value != value:
-            # logger.debug(f"Parameter changed: %s = %s", param_name, value)
             for handler in self.handlers:
                 try:
                     handler.on_parameter_changed(param_name, value)
-                except Exception as e:
-                    logger.error(
-                        f"Error in handler {handler.__class__.__name__} for '{param_name}': {e}"
-                    )
+                except Exception as error:
+                    logger.error(f"Error in handler {handler.__class__.__name__} for '{param_name}': {error}")
 
     def add_handler(self, handler: "BaseHandler") -> None:
         """Register a new handler to receive parameter updates.

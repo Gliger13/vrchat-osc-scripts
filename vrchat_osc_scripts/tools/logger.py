@@ -35,16 +35,10 @@ class ColourFormatter(logging.Formatter):
         """Return the formatted message for *record* with colour adornment."""
         colour_escape = LEVEL_COLOURS.get(record.levelno, "")
         original_level_name = record.levelname
-        original_msg = record.getMessage()
-
         record.levelname = f"{colour_escape}{original_level_name}{RESET_ESCAPE}"
-        record.msg = f"{colour_escape}{original_msg}{RESET_ESCAPE}"
-
-        try:
-            return super().format(record)
-        finally:
-            record.levelname = original_level_name
-            record.msg = original_msg
+        formatted = super().format(record)
+        record.levelname = original_level_name
+        return f"{colour_escape}{formatted}{RESET_ESCAPE}"
 
 
 def setup_logging(

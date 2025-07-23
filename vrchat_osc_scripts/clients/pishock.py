@@ -70,7 +70,11 @@ class PiShockClient:
                     f"Passed: {time_since_last_shock.total_seconds()}s"
                 )
                 return False
-        logger.info(f"Sending PiShock command: {payload}")
+
+        logger.info(
+            f"Sending PiShock command {name} with operation {operation.name}, and intensity {intensity}, "
+            f"and duration {duration}"
+        )
         self._last_shock_time = datetime.now()
         response = requests.post(self.API_URL, json=payload, headers=headers)
         logger.info(response.text)

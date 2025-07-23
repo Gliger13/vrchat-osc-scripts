@@ -73,10 +73,3 @@ class VRChatOSCReceiver:
         """Start the OSC server to listen for incoming messages indefinitely."""
         logger.info("Starting OSC server...")
         self.server.serve_forever()
-
-    def get_parameters(self) -> dict[str, Any]:
-        """Get a copy of the current parameters dictionary.
-
-        :return: A dictionary mapping parameter names to their current values.
-        """
-        return dict(self.parameters)

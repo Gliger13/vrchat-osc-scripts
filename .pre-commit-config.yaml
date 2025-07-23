@@ -1,0 +1,46 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+    - id: end-of-file-fixer
+    - id: trailing-whitespace
+    - id: check-added-large-files
+    - id: check-ast
+    - id: check-case-conflict
+    - id: check-merge-conflict
+    - id: check-toml
+    - id: check-yaml
+    - id: check-docstring-first
+  - repo: https://github.com/psf/black
+    rev: 25.1.0
+    hooks:
+    - id: black
+      args: [--preview, --line-length=120]
+  - repo: https://github.com/python-poetry/poetry
+    rev: 2.1.3
+    hooks:
+      - id: poetry-check
+      - id: poetry-lock
+      - id: poetry-install
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.8.6
+    hooks:
+      - id: bandit
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.28.0
+    hooks:
+      - id: gitleaks
+  - repo: https://github.com/pycqa/isort
+    rev: 6.0.1
+    hooks:
+      - id: isort
+        args: [--profile=black, --line-length=120]
+  - repo: https://github.com/jendrikseipp/vulture
+    rev: v2.14
+    hooks:
+      - id: vulture
+        args: [vrchat_osc_scripts/, --min-confidence=100]
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.20.0
+    hooks:
+     - id: pyupgrade

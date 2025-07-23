@@ -1,6 +1,6 @@
 # Gligers' vrchat-osc-scripts
 
-> A set of scripts to interact with VRChat via OSC, 
+> A set of scripts to interact with VRChat via OSC,
 > currently supporting sending a shock to the [PiShock API](https://www.pishock.com/) when the tail is grabbed.
 
 ---

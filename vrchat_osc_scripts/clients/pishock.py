@@ -76,7 +76,7 @@ class PiShockClient:
             f"and duration {duration}"
         )
         self._last_shock_time = datetime.now()
-        response = requests.post(self.API_URL, json=payload, headers=headers)
+        response = requests.post(self.API_URL, json=payload, headers=headers, timeout=30)
         logger.info(response.text)
         response.raise_for_status()
         return True

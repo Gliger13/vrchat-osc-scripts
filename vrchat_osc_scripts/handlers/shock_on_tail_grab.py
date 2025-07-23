@@ -6,7 +6,7 @@ Defines a handler that reacts to specific VRChat OSC parameter changes.
 import logging
 from typing import Any
 
-from vrchat_osc_scripts.clients.pishock import PiShockClient, Operation
+from vrchat_osc_scripts.clients.pishock import Operation, PiShockClient
 from vrchat_osc_scripts.clients.receiver import VRChatOSCReceiver
 from vrchat_osc_scripts.clients.sender import VRChatOSCSender
 from vrchat_osc_scripts.config import Config

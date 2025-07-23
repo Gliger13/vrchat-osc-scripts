@@ -185,10 +185,7 @@ cython_debug/
 # --- JetBrains IDEA (directory-based) ----------------------
 
 # Ignore only user‑specific files
-.idea/workspace.xml
-.idea/usage.statistics.xml
-.idea/shelf/
-.idea/*.iml
+.idea/
 
 # =============================================================================
 

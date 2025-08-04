@@ -15,14 +15,15 @@ This doc will guide you how to run scripts using executble aka .exe file.
 
 4) Click download raw file
 
+![img.png](images/env-download-example.png)
 
-5) Create somewhere `vrchat-osc-scripts` directory or with any other names
+5) Create somewhere a `vrchat-osc-scripts` directory or use any other name you prefer
 
 4) Move the downloaded files to the newly created folder
 
 5) Rename `.env.example` to `.env`
 
-At the current step, you setupo should look like this:
+At the current step, your setup should look like this:
 
 ![image](images/env-location-near-executable-example.png)
 

@@ -64,7 +64,6 @@ jobs:
         id: release_notes
         shell: bash
         run: |
-          # Get latest tag before this one
           PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
 
           if [ -z "$PREV_TAG" ]; then
@@ -75,9 +74,11 @@ jobs:
             git log "$PREV_TAG"..HEAD --pretty=format:"- %s" > release_notes.txt
           fi
 
-          echo "RELEASE_BODY<<EOF" >> $GITHUB_ENV
-          cat release_notes.txt >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          {
+            echo 'RELEASE_BODY<<EOF'
+            cat release_notes.txt
+            echo 'EOF'
+          } >> "$GITHUB_ENV"
 
       - name: Upload .exe and checksum to GitHub Release
         uses: softprops/action-gh-release@v2

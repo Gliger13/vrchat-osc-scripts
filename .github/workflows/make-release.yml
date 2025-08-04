@@ -60,32 +60,11 @@ jobs:
         shell: pwsh
         run: Get-Content dist\vrchat-osc-scripts.exe.sha256
 
-      - name: Generate release notes from commit messages
-        id: release_notes
-        shell: bash
-        run: |
-          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-
-          if [ -z "$PREV_TAG" ]; then
-            echo "No previous tag found. Listing all commits."
-            git log --pretty=format:"- %s" > release_notes.txt
-          else
-            echo "Previous tag: $PREV_TAG"
-            git log "$PREV_TAG"..HEAD --pretty=format:"- %s" > release_notes.txt
-          fi
-
-          {
-            echo 'RELEASE_BODY<<EOF'
-            cat release_notes.txt
-            echo 'EOF'
-          } >> "$GITHUB_ENV"
-
       - name: Upload .exe and checksum to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             dist/vrchat-osc-scripts.exe
             dist/vrchat-osc-scripts.exe.sha256
-          body: ${{ env.RELEASE_BODY }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,69 @@
+name: Build and Release Windows Executable
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Only on version tags like v1.0.0
+
+jobs:
+  build:
+    name: Build Windows Executable
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache Poetry virtualenv
+        id: cache-poetry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~\AppData\Local\pypoetry\Cache
+            ~\AppData\Local\pypoetry\virtualenvs
+          key: poetry-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            poetry-${{ runner.os }}-
+
+      - name: Install Poetry
+        run: |
+          (Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | python -
+
+      - name: Add Poetry to PATH
+        run: echo "$env:APPDATA\Python\Scripts" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8
+
+      - name: Install dependencies with Poetry
+        run: poetry install --no-interaction --no-root --with=build
+      - name: Build .exe using PyInstaller
+        run: poetry run pyinstaller vrchat_osc_scripts/main.py --onefile --name vrchat-osc-scripts
+
+      - name: Upload .exe artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-executable
+          path: dist/*.exe
+
+      - name: Generate SHA256 checksum
+        shell: pwsh
+        run: |
+          Get-FileHash dist\*.exe -Algorithm SHA256 | ForEach-Object {
+            "$($_.Hash) *$($_.Path | Split-Path -Leaf)"
+          } | Out-File -Encoding ASCII dist\SHA256SUMS.txt
+
+      - name: Print SHA256 checksum
+        shell: pwsh
+        run: Get-Content dist\SHA256SUMS.txt
+
+      - name: Upload .exe and checksum to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.exe
+            dist/SHA256SUMS.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

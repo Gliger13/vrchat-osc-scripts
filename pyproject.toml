@@ -1,6 +1,6 @@
 [project]
 name = "vrchat-osc-scripts"
-version = "0.2.3"
+version = "0.3.0"
 description = "Python scripts to read and write VRChat OSC messages"
 authors = [
     { name = "Gliger", email = "gligers@pm.me" }

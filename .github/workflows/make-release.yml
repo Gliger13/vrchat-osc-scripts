@@ -41,7 +41,7 @@ jobs:
         run: poetry install --no-interaction --with=build
 
       - name: Build .exe using PyInstaller
-        run: poetry run pyinstaller vrchat_osc_scripts/main.py --onefile --name vrchat-osc-scripts
+        run: poetry run pyinstaller vrchat_osc_scripts/launcher.py --onefile --name vrchat-osc-scripts
 
       - name: Upload .exe artifact
         uses: actions/upload-artifact@v4
